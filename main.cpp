@@ -19,7 +19,7 @@ int main()
     int count;
     std::ifstream data("C:/Users/kacpe/source/repos/NEH/neh.data.txt");
     std::string find = "data.";
-    find.append("000:");
+    find.append("004:");
     std::string tmp;
     while (tmp != find) {
         data >> tmp;
@@ -38,12 +38,12 @@ int main()
 
     for (int i = 0; i < M * N; i++) {
         data >> P[i];
-        cout << P[i] << " ";
+        //cout << P[i] << " ";
     }
-    cout << "\n\n";
-
+    //cout << "\n\n";
+    
     //algorytm
-
+    
     //Wagi
     //cout << "Wagi:" << endl;
     for (int i = 0; i < N; i++)
@@ -94,12 +94,12 @@ int main()
                     skip = 1;
                 newX[l + skip] = X[l];
             }
-            cout << "newX: ";
+            /*cout << "newX: ";
             for (int z = 0; z < i+1; z++)
             {
                 cout << newX[z] << " ";
             }
-            cout << endl;
+            cout << endl;*/
             //sprawdzamy czy jest lepiej
             c = Cmax(T, P, newX, M, i + 1);
             if (c < best)
@@ -126,10 +126,7 @@ int main()
                 skip = 1;
             X[j + skip] = temp[j];
         }
-        
-        cout << endl;
 
-        
         free(newX);
         
     }
