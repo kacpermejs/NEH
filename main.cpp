@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <algorithm>
-
+#include <chrono>
 using namespace std;
 
 int Cmax(int* T, int* P, int* X, int M, int N);
@@ -19,8 +19,11 @@ int main()
     int count;
     std::ifstream data("C:/Users/kacpe/source/repos/NEH/neh.data.txt");
     std::string find = "data.";
-    find.append("004:");
+    find.append("110:");
     std::string tmp;
+    
+
+    
     while (tmp != find) {
         data >> tmp;
     }
@@ -43,7 +46,7 @@ int main()
     //cout << "\n\n";
     
     //algorytm
-    
+    auto start = chrono::steady_clock::now();
     //Wagi
     //cout << "Wagi:" << endl;
     for (int i = 0; i < N; i++)
@@ -63,7 +66,6 @@ int main()
     int* newX;
     for (int i = 0; i < N; i++)
     {
-        
         newX = (int*)malloc((i + 1) * sizeof(int));
         //szukamy najwy¿szej wagi z nieuszeregowanych
         highest = 0;
@@ -74,7 +76,6 @@ int main()
                 highest = W[j];
                 index = j;
             }
-                
         }
         ordered[index] = true;
         int best = INT32_MAX;
@@ -107,8 +108,6 @@ int main()
                 best = c;
                 bestIndex = k;
             }
-            
-            
         }
         //
         
@@ -139,6 +138,10 @@ int main()
     X[2] = 2;
     X[3] = 1;
     */
+    auto stop = chrono::steady_clock::now();
+    chrono::duration<double> elapsed_seconds = stop - start;
+    cout << "Czas: " << elapsed_seconds.count() << endl;
+    
     cout << "Kolejnosc: ";
     for (int i = 0; i < N; i++)
     {
