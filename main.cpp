@@ -3,18 +3,23 @@
 #include <fstream>
 #include <algorithm>
 #include <chrono>
+#include <vector>
 using namespace std;
 
 int Cmax(int* T, int* P, int* X, int M, int N);
 
-
+bool sortbysecdesc(const pair<int, int>& a,
+    const pair<int, int>& b)
+{
+    return a.second > b.second;
+}
 
 int main()
 {
     // N - liczba zadan, M - liczba maszyn, P - czasy na poszczegolnych maszynach (grupowane M)
     // T - czasy zakonczenia poszczegolnych zadan, X - kolejnosc
     int N, M, * P, * T, * X;
-    int* W;
+    vector<pair<int,int>> W;
     bool *ordered;
     int count;
     std::ifstream data("C:/Users/kacpe/source/repos/NEH/neh.data.txt");
@@ -36,7 +41,8 @@ int main()
     X = (int*)malloc(N * sizeof(int));
     int* temp = new int[N];
 
-    W = new int[N];
+    //W = new int[N];
+    W.resize(N);
     ordered = new bool[N];
 
     for (int i = 0; i < M * N; i++) {
@@ -51,15 +57,23 @@ int main()
     //cout << "Wagi:" << endl;
     for (int i = 0; i < N; i++)
     {
-        W[i] = 0;
+        W[i].second = 0; //weight
+        W[i].first = i; //index
         ordered[i] = false;
         for (int j = 0; j < M; j++)
         {
-            W[i] += P[i * M + j];
-            
+            W[i].second += P[i * M + j];
         }
+        
+
         //cout << W[i] << " ";
     }
+    sort(W.begin(), W.end(), sortbysecdesc);
+
+    /*for (int j = 0; j < N; j++)
+    {
+        cout << "Id: " << W[j].first << " W= " << W[j].second << endl;
+    }*/
     //cout << endl;
     int highest = 0;
     int index = -1;
@@ -68,16 +82,9 @@ int main()
     {
         newX = (int*)malloc((i + 1) * sizeof(int));
         //szukamy najwy¿szej wagi z nieuszeregowanych
-        highest = 0;
-        for (int j = 0; j < N; j++)
-        {
-            if (W[j] > highest && !ordered[j])
-            {
-                highest = W[j];
-                index = j;
-            }
-        }
-        ordered[index] = true;
+        highest = W[i].second;
+        
+        ordered[i] = true;
         int best = INT32_MAX;
         int bestIndex = 0;
         int c;
@@ -152,7 +159,8 @@ int main()
     delete[] T;
     free(X);
     delete[] temp;
-    delete[] W;
+    //delete[] W;
+    W.clear();
     delete[] ordered;
     
 
