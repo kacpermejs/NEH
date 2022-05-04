@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <fstream>
 #include <algorithm>
+#include <chrono>
+#include <vector>
 
 using namespace std;
 
@@ -14,11 +16,12 @@ int main()
     // T - czasy zakonczenia poszczegolnych zadan, X - kolejnosc
     int N, M, * P, * T, * X;
     int* W;
+
     bool *ordered;
     int count;
     std::ifstream data("C:/Users/kacpe/source/repos/NEH/neh.data.txt");
     std::string find = "data.";
-    find.append("004:");
+    find.append("120:");
     std::string tmp;
     while (tmp != find) {
         data >> tmp;
@@ -42,7 +45,7 @@ int main()
     //cout << "\n\n";
     
     //algorytm
-    
+    auto start = chrono::steady_clock::now();
     //Wagi
     //cout << "Wagi:" << endl;
     for (int i = 0; i < N; i++)
@@ -138,6 +141,9 @@ int main()
     X[2] = 2;
     X[3] = 1;
     */
+    auto stop = chrono::steady_clock::now();
+    chrono::duration<double> elapsed = stop - start;
+    cout << "Czas: " << elapsed.count() << endl;
     cout << "Kolejnosc: ";
     for (int i = 0; i < N; i++)
     {
