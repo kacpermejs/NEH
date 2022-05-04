@@ -2,33 +2,24 @@
 #include <cstdlib>
 #include <fstream>
 #include <algorithm>
-#include <chrono>
-#include <vector>
+
 using namespace std;
 
 int Cmax(int* T, int* P, int* X, int M, int N);
 
-bool sortbysecdesc(const pair<int, int>& a,
-    const pair<int, int>& b)
-{
-    return a.second > b.second;
-}
 
 int main()
 {
     // N - liczba zadan, M - liczba maszyn, P - czasy na poszczegolnych maszynach (grupowane M)
     // T - czasy zakonczenia poszczegolnych zadan, X - kolejnosc
     int N, M, * P, * T, * X;
-    vector<pair<int,int>> W;
+    int* W;
     bool *ordered;
     int count;
     std::ifstream data("C:/Users/kacpe/source/repos/NEH/neh.data.txt");
     std::string find = "data.";
-    find.append("110:");
+    find.append("004:");
     std::string tmp;
-    
-
-    
     while (tmp != find) {
         data >> tmp;
     }
@@ -41,8 +32,7 @@ int main()
     X = (int*)malloc(N * sizeof(int));
     int* temp = new int[N];
 
-    //W = new int[N];
-    W.resize(N);
+    W = new int[N];
     ordered = new bool[N];
 
     for (int i = 0; i < M * N; i++) {
@@ -52,39 +42,40 @@ int main()
     //cout << "\n\n";
     
     //algorytm
-    auto start = chrono::steady_clock::now();
+    
     //Wagi
     //cout << "Wagi:" << endl;
     for (int i = 0; i < N; i++)
     {
-        W[i].second = 0; //weight
-        W[i].first = i; //index
+        W[i] = 0;
         ordered[i] = false;
         for (int j = 0; j < M; j++)
         {
-            W[i].second += P[i * M + j];
+            W[i] += P[i * M + j];
+            
         }
-        
-
         //cout << W[i] << " ";
     }
-    sort(W.begin(), W.end(), sortbysecdesc);
-
-    /*for (int j = 0; j < N; j++)
-    {
-        cout << "Id: " << W[j].first << " W= " << W[j].second << endl;
-    }*/
     //cout << endl;
     int highest = 0;
     int index = -1;
     int* newX;
     for (int i = 0; i < N; i++)
     {
+        
         newX = (int*)malloc((i + 1) * sizeof(int));
         //szukamy najwy¿szej wagi z nieuszeregowanych
-        highest = W[i].second;
-        
-        ordered[i] = true;
+        highest = 0;
+        for (int j = 0; j < N; j++)
+        {
+            if (W[j] > highest && !ordered[j])
+            {
+                highest = W[j];
+                index = j;
+            }
+                
+        }
+        ordered[index] = true;
         int best = INT32_MAX;
         int bestIndex = 0;
         int c;
@@ -115,6 +106,8 @@ int main()
                 best = c;
                 bestIndex = k;
             }
+            
+            
         }
         //
         
@@ -145,10 +138,6 @@ int main()
     X[2] = 2;
     X[3] = 1;
     */
-    auto stop = chrono::steady_clock::now();
-    chrono::duration<double> elapsed_seconds = stop - start;
-    cout << "Czas: " << elapsed_seconds.count() << endl;
-    
     cout << "Kolejnosc: ";
     for (int i = 0; i < N; i++)
     {
@@ -159,8 +148,7 @@ int main()
     delete[] T;
     free(X);
     delete[] temp;
-    //delete[] W;
-    W.clear();
+    delete[] W;
     delete[] ordered;
     
 
