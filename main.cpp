@@ -9,19 +9,25 @@ using namespace std;
 
 int Cmax(int* T, int* P, int* X, int M, int N);
 
+bool sortbysecdesc(const pair<int, int>& a,
+    const pair<int, int>& b)
+{
+    return a.second > b.second;
+}
 
 int main()
 {
     // N - liczba zadan, M - liczba maszyn, P - czasy na poszczegolnych maszynach (grupowane M)
     // T - czasy zakonczenia poszczegolnych zadan, X - kolejnosc
     int N, M, * P, * T, * X;
-    int* W;
+    //int* W;
+    vector<pair<int, int>> W;
 
     bool *ordered;
     int count;
     std::ifstream data("C:/Users/kacpe/source/repos/NEH/neh.data.txt");
     std::string find = "data.";
-    find.append("120:");
+    find.append("063:");
     std::string tmp;
     while (tmp != find) {
         data >> tmp;
@@ -35,7 +41,8 @@ int main()
     X = (int*)malloc(N * sizeof(int));
     int* temp = new int[N];
 
-    W = new int[N];
+    //W = new int[N];
+    W.resize(N);
     ordered = new bool[N];
 
     for (int i = 0; i < M * N; i++) {
@@ -47,18 +54,28 @@ int main()
     //algorytm
     auto start = chrono::steady_clock::now();
     //Wagi
-    //cout << "Wagi:" << endl;
+    cout << "Wagi:" << endl;
     for (int i = 0; i < N; i++)
     {
-        W[i] = 0;
+        //W[i] = 0;
+        W[i].second = 0; //waga
+        W[i].first = i; //index
         ordered[i] = false;
         for (int j = 0; j < M; j++)
         {
-            W[i] += P[i * M + j];
+            //W[i] += P[i * M + j];
+            W[i].second += P[i * M + j];
             
         }
         //cout << W[i] << " ";
     }
+    //sort(W.begin(), W.end(), sortbysecdesc);
+    
+    for (int j = 0; j < N; j++)
+    {
+        cout << "Id: " << W[j].first << " W= " << W[j].second << endl;
+    }
+    
     //cout << endl;
     int highest = 0;
     int index = -1;
@@ -68,23 +85,31 @@ int main()
         
         newX = (int*)malloc((i + 1) * sizeof(int));
         //szukamy najwy¿szej wagi z nieuszeregowanych
+        
         highest = 0;
         for (int j = 0; j < N; j++)
         {
-            if (W[j] > highest && !ordered[j])
+            if (W[j].second > highest && !ordered[j])
             {
-                highest = W[j];
+                highest = W[j].second;
                 index = j;
             }
                 
         }
+        
         ordered[index] = true;
-        int best = INT32_MAX;
+        index = W[index].first;
+        
+
+        //index zadania z najwiêksz¹ wag¹ z pozosta³ych
+        //index = W[i].first;
+
         int bestIndex = 0;
         int c;
-        
+        int best = INT32_MAX;
         
         int skip = 0;
+
         for (int k = 0; k < i + 1; k++)//2
         {
             //Wstawiamy do uszeregowania
@@ -112,7 +137,36 @@ int main()
             
             
         }
-        //
+
+        //stare=========================================================================
+        //for (int k = 0; k < i + 1; k++)//2
+        //{
+        //    //Wstawiamy do uszeregowania
+        //    newX[k] = index;
+        //    skip = 0;
+        //    for (int l = 0; l < i; l++)//
+        //    {
+        //        if (l == k)
+        //            skip = 1;
+        //        newX[l + skip] = X[l];
+        //    }
+        //    /*cout << "newX: ";
+        //    for (int z = 0; z < i+1; z++)
+        //    {
+        //        cout << newX[z] << " ";
+        //    }
+        //    cout << endl;*/
+        //    //sprawdzamy czy jest lepiej
+        //    c = Cmax(T, P, newX, M, i + 1);
+        //    if (c < best)
+        //    {
+        //        best = c;
+        //        bestIndex = k;
+        //    }
+        //    
+        //    
+        //}
+        //======================================================================
         
         //wynik czêœciowy
         
@@ -154,8 +208,9 @@ int main()
     delete[] T;
     free(X);
     delete[] temp;
-    delete[] W;
-    delete[] ordered;
+    //delete[] W;
+    W.clear();
+    //delete[] ordered;
     
 
 }

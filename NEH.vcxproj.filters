@@ -23,8 +23,8 @@
     <ClInclude Include="neh.data.txt">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="main.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="wynik.txt">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
