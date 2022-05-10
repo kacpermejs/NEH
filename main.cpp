@@ -12,7 +12,10 @@ int Cmax(int* T, int* P, int* X, int M, int N);
 bool sortbysecdesc(const pair<int, int>& a,
     const pair<int, int>& b)
 {
-    return a.second > b.second;
+    if (a.second == b.second)
+        return a.first < b.first;
+    else
+        return a.second > b.second;
 }
 
 int main()
@@ -67,25 +70,27 @@ int main()
             W[i].second += P[i * M + j];
             
         }
-        //cout << W[i] << " ";
+        //cout << W[i].second << " ";
     }
-    //sort(W.begin(), W.end(), sortbysecdesc);
-    
+    sort(W.begin(), W.end(), sortbysecdesc);
+    /*
     for (int j = 0; j < N; j++)
     {
         cout << "Id: " << W[j].first << " W= " << W[j].second << endl;
-    }
+    }*/
     
     //cout << endl;
     int highest = 0;
     int index = -1;
     int* newX;
+
+    
     for (int i = 0; i < N; i++)
     {
         
         newX = (int*)malloc((i + 1) * sizeof(int));
         //szukamy najwy¿szej wagi z nieuszeregowanych
-        
+        /*
         highest = 0;
         for (int j = 0; j < N; j++)
         {
@@ -96,13 +101,16 @@ int main()
             }
                 
         }
-        
+        */
+        //index zadania z najwiêksz¹ wag¹ z pozosta³ych
+        index = i;// W[i].first;
+
+        cout << "Id: " << W[index].first << " W= " << W[index].second << endl;
         ordered[index] = true;
         index = W[index].first;
         
 
-        //index zadania z najwiêksz¹ wag¹ z pozosta³ych
-        //index = W[i].first;
+        
 
         int bestIndex = 0;
         int c;
