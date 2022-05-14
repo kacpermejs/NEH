@@ -22,43 +22,45 @@ int Cmax1(int* T, int* P, const vector<int> &X, int M, int N)
     }
     return T[M];
 }
-int Cmax2(int** Tr, int* P, const vector<int> &X, int M, int N)
+int Cmax2(vector<vector<int>>& Tr, vector<vector<int>>& Tl, int* P, const vector<int> &X, int M, int N, int Elem, int Place)
 {
 
-    for (int i = 0; i < N; i++)//po maszynach
+    P[Elem];//nowy element
+    vector<int> R;
+    vector<int> L;
+    R.resize(M);
+    L.resize(M);
+    for (int i = 0; i < M; i++)
     {
-        for (int j = 0; j < M; j++)//po zadaniach
+        if (Place == 0 && i == 0)
         {
-            if (i < 1 && j < 1)
-            {
-                Tr[j][i] = P[X[i] * M + j];
-            }
-            else if (j > 0 && i == 0)
-            {
-                Tr[j][i] = Tr[j-1][i] + P[X[i] * M + j];//[j-1][i]
-            }
-            else if (i > 0 && j == 0)
-            {
-                Tr[j][i] = Tr[j][i-1] + P[X[i] * M + j];//[j][i-1]
-            }
-            else
-            {
-                Tr[j][i] = std::max(Tr[j-1][i] + P[X[i] * M + j], Tr[j][i-1] + P[X[i] * M + j]);
-            }
+            R[i] = P[Elem * M + i];
         }
-    }
-    std::cout << "\n";
-    for (int i = 0; i < N; i++)
-    {
-        for (int j = 0; j < M; j++)
+        else if (Place == 0 && i > 0)
         {
-            std::cout << "Index: ["<< j << ", " << i << "] Value: " << Tr[j][i] << std::endl;
+            R[i] = R[i - 1] + P[Elem * M + i];
         }
-        std::cout << "\n";
+        else if (Place > 0 && i == 0)
+        {
+            R[i] = Tr[i][Place-1] + P[Elem * M + i];
+        }
+        else
+        {
+            R[i] = std::max(R[i - 1] + P[Elem * M + i], Tr[i][Place-1] + P[Elem * M + i]);
+        }
     }
 
-    int out = Tr[M-1][N-1];
-    return out;
+    
+    if (Place == N - 1)
+        return R[M - 1];
+
+    int highest = 0;
+    for (int i = 0; i < M; i++)
+    {
+        
+        highest = max(R[i] + Tl[i][Place + 1], highest);
+    }
+    return highest;
 }
 
 bool sortbysecdesc(const pair<int, int>& a,
@@ -237,7 +239,7 @@ void algorytm1(int* T, int* P, vector<int> &X, int M, int N, bool* ordered, vect
     
 }
 
-void algorytm2(int* Tr, int* P, vector<int> &X, int M, int N, bool* ordered, vector<pair<int, int>> W, int* temp)//qneh
+void algorytm2(vector<vector<int>> Tr, vector<vector<int>> Tl, int* P, vector<int> &X, int M, int N, vector<pair<int, int>> W, int* temp)//qneh
 {
     //Wagi
     for (int i = 0; i < N; i++)
@@ -245,7 +247,7 @@ void algorytm2(int* Tr, int* P, vector<int> &X, int M, int N, bool* ordered, vec
         //W[i] = 0;
         W[i].second = 0; //waga
         W[i].first = i; //index
-        ordered[i] = false;
+        
         for (int j = 0; j < M; j++)
         {
             //W[i] += P[i * M + j];
@@ -263,32 +265,34 @@ void algorytm2(int* Tr, int* P, vector<int> &X, int M, int N, bool* ordered, vec
     
 
 
-    for (int i = 0; i < N; i++)
+    for (int l = 0; l < N; l++)
     {
 
         //index zadania z najwiêksz¹ wag¹ z pozosta³ych
-        index = i;// W[i].first;
+        index = l;// W[i].first;
 
-        ordered[index] = true;
+        
         index = W[index].first;
 
         int bestIndex = 0;
         int c;
         int best = INT32_MAX;
 
-        for (int k = 0; k < i + 1; k++)//2
+        for (int k = 0; k < l + 1; k++)//2
         {
             //wstawiamy na nowe miejsce
-            X.insert(X.begin() + k, index);
+            //X.insert(X.begin() + k, index);
+            
+            //sprawdzamy Cmax na k-tym miejscu
 
             //sprawdzamy czy jest lepiej
-            c = Cmax1(Tr, P, X, M, i + 1);
+            c = Cmax2(Tr, Tl, P, X, M, l + 1, index, k);
             if (c < best)
             {
                 best = c;
                 bestIndex = k;
             }
-            X.erase(X.begin() + k);
+            //X.erase(X.begin() + k);
 
 
 
@@ -296,9 +300,71 @@ void algorytm2(int* Tr, int* P, vector<int> &X, int M, int N, bool* ordered, vec
 
         //wynik czêœciowy
         X.insert(X.begin() + bestIndex, index);
+        vector<int> R;
+        R.resize(M);
+        
+        for (int i = 0; i < M; i++)
+        {
+            Tr[i].insert(Tr.begin() + bestIndex, 0);
+            Tl[i].insert(Tl.begin() + bestIndex, 0);
+        }
+        
+        
+        ///TODO naprawianie grafu
+        for (int i = bestIndex; i < l+1; i++)//po zadaniach
+        {
+            for (int j = 0; j < M; j++)//po maszynach
+            {
+                if (i == 0 && j == 0)
+                {
+                    Tr[j][i] = P[X[i] * M + j];
+                }
+                else if (j > 0 && i == 0)
+                {
+                    Tr[j][i] = Tr[j - 1][i] + P[X[i] * M + j];//[j-1][i]
+                }
+                else if (i > 0 && j == 0)
+                {
+                    Tr[j][i] = Tr[j][i - 1] + P[X[i] * M + j];//[j][i-1]
+                }
+                else
+                {
+                    Tr[j][i] = std::max(Tr[j - 1][i] + P[X[i] * M + j], Tr[j][i - 1] + P[X[i] * M + j]);
+                }
+            }
+        }
+
+
+        for (int i = bestIndex; i >= 0; i--)
+        {
+            for (int j = M - 1; j >= 0; j--)
+            {
+                if (i == N - 1 && j == M - 1)
+                {
+                    Tl[j][i] = P[X[i] * M + j];
+                }
+                else if (j < M - 1 && i == N - 1)
+                {
+                    Tl[j][i] = Tl[j + 1][i] + P[X[i] * M + j];
+                }
+                else if (i < N - 1 && j == M - 1)
+                {
+                    Tl[j][i] = Tl[j][i + 1] + P[X[i] * M + j];
+                }
+                else
+                {
+                    Tl[j][i] = std::max(Tl[j + 1][i] + P[X[i] * M + j], Tl[j][i + 1] + P[X[i] * M + j]);
+                }
+            }
+        }
 
     }
 }
+
+/*
+
+
+*/
 
 int main()
 {
@@ -336,11 +402,30 @@ int main()
     X.resize(N);
 
     //qneh
-    int** TGraph = new int* [N];
+    vector<vector<int>> TGraphR;
+    TGraphR.resize(M);
+    for (int i = 0; i < M; i++)
+    {
+        TGraphR[i].resize(N);
+    }
+    //int** TGraphR = new int* [N];
+    ////Allocating the column space in heap dynamically
+    //for (int i = 0; i < N; i++) {
+    //    TGraphR[i] = new int[M];
+    //}
+    //qneh
+    vector<vector<int>> TGraphL;
+    TGraphL.resize(M);
+    for (int i = 0; i < M; i++)
+    {
+        TGraphL[i].resize(N);
+    }
+    /*
+    int** TGraphL = new int* [N];
     //Allocating the column space in heap dynamically
     for (int i = 0; i < N; i++) {
-        TGraph[i] = new int[M];
-    }
+        TGraphL[i] = new int[M];
+    }*/
 
     //W = new int[N];
     W.resize(N);
@@ -357,7 +442,7 @@ int main()
     auto start = chrono::steady_clock::now();
     //algorytm2(T, P, Xold, M, N, ordered, W, temp);
     //algorytm1(T, P, X, M, N, ordered, W, temp);
-    algorytm2(T, P, X, M, N, ordered, W, temp);
+    algorytm2(TGraphR, TGraphL, P, X, M, N, W, temp);
 
 
 
@@ -378,7 +463,7 @@ int main()
     }
     //cout << endl << Cmax1(T,P,X,M,N) << endl;
     //cout << endl << Cmax(T,P,Xold,M,N) << endl;
-    cout << endl << Cmax2(TGraph,P,X,M,N) << endl;
+    cout << endl << TGraphL[0][0] << endl;
     delete[] P;
     delete[] T;
     free(Xold);
@@ -387,7 +472,8 @@ int main()
     //delete[] W;
     W.clear();
     delete[] ordered;
-    delete[] TGraph;
+    //delete[] TGraphR;
+    //delete[] TGraphL;
 
 }
 
