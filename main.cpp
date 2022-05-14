@@ -8,7 +8,7 @@
 using namespace std;
 
 int Cmax(int* T, int* P, int* X, int M, int N);
-int Cmax1(int* T, int* P, vector<int> X, int M, int N)
+int Cmax1(int* T, int* P, const vector<int> &X, int M, int N)
 {
     //zerowanie 
     for (int i = 0; i <= M; i++) {
@@ -22,19 +22,43 @@ int Cmax1(int* T, int* P, vector<int> X, int M, int N)
     }
     return T[M];
 }
-int Cmax2(int* T, int* P, int* X, int M, int N)
+int Cmax2(int** Tr, int* P, const vector<int> &X, int M, int N)
 {
-    //zerowanie 
-    for (int i = 0; i <= M; i++) {
-        T[i] = 0;
-    }
 
-    for (int n = 0; n < N; n++) {
-        for (int m = 0; m < M; m++) {
-            T[m + 1] = max(T[m + 1], T[m]) + P[(m)+X[n] * M];
+    for (int i = 0; i < N; i++)//po maszynach
+    {
+        for (int j = 0; j < M; j++)//po zadaniach
+        {
+            if (i < 1 && j < 1)
+            {
+                Tr[j][i] = P[X[i] * M + j];
+            }
+            else if (j > 0 && i == 0)
+            {
+                Tr[j][i] = Tr[j-1][i] + P[X[i] * M + j];//[j-1][i]
+            }
+            else if (i > 0 && j == 0)
+            {
+                Tr[j][i] = Tr[j][i-1] + P[X[i] * M + j];//[j][i-1]
+            }
+            else
+            {
+                Tr[j][i] = std::max(Tr[j-1][i] + P[X[i] * M + j], Tr[j][i-1] + P[X[i] * M + j]);
+            }
         }
     }
-    return T[M];
+    std::cout << "\n";
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < M; j++)
+        {
+            std::cout << "Index: ["<< j << ", " << i << "] Value: " << Tr[j][i] << std::endl;
+        }
+        std::cout << "\n";
+    }
+
+    int out = Tr[M-1][N-1];
+    return out;
 }
 
 bool sortbysecdesc(const pair<int, int>& a,
@@ -213,7 +237,7 @@ void algorytm1(int* T, int* P, vector<int> &X, int M, int N, bool* ordered, vect
     
 }
 
-void algorytm2(int* T, int* P, int* X, int M, int N, bool* ordered, vector<pair<int, int>> W, int* temp)//qneh
+void algorytm2(int* Tr, int* P, vector<int> &X, int M, int N, bool* ordered, vector<pair<int, int>> W, int* temp)//qneh
 {
     //Wagi
     for (int i = 0; i < N; i++)
@@ -224,7 +248,7 @@ void algorytm2(int* T, int* P, int* X, int M, int N, bool* ordered, vector<pair<
         ordered[i] = false;
         for (int j = 0; j < M; j++)
         {
-            
+            //W[i] += P[i * M + j];
             W[i].second += P[i * M + j];
 
         }
@@ -233,73 +257,45 @@ void algorytm2(int* T, int* P, int* X, int M, int N, bool* ordered, vector<pair<
     sort(W.begin(), W.end(), sortbysecdesc);
 
 
-    
+    //cout << endl;
+    int highest = 0;
     int index = -1;
-    int* newX;
+    
+
 
     for (int i = 0; i < N; i++)
     {
 
-        newX = (int*)malloc((i + 1) * sizeof(int));
-
         //index zadania z najwiêksz¹ wag¹ z pozosta³ych
         index = i;// W[i].first;
 
-        //cout << "Id: " << W[index].first << " W= " << W[index].second << endl;
         ordered[index] = true;
         index = W[index].first;
-
-
-
 
         int bestIndex = 0;
         int c;
         int best = INT32_MAX;
 
-        int skip = 0;
-
         for (int k = 0; k < i + 1; k++)//2
         {
+            //wstawiamy na nowe miejsce
+            X.insert(X.begin() + k, index);
 
-
-            //Wstawiamy do uszeregowania
-            newX[k] = index;
-            skip = 0;
-            for (int l = 0; l < i; l++)//
-            {
-                if (l == k)
-                    skip = 1;
-                newX[l + skip] = X[l];
-            }
             //sprawdzamy czy jest lepiej
-            c = Cmax(T, P, newX, M, i + 1);
+            c = Cmax1(Tr, P, X, M, i + 1);
             if (c < best)
             {
                 best = c;
                 bestIndex = k;
             }
+            X.erase(X.begin() + k);
+
 
 
         }
-
-
 
         //wynik czêœciowy
-
-        for (int j = 0; j < i + 1; j++)
-        {
-            temp[j] = X[j];
-        }
-        X[bestIndex] = index;
-        skip = 0;
-        for (int j = 0; j < i; j++)//
-        {
-            if (j == bestIndex)
-                skip = 1;
-            X[j + skip] = temp[j];
-        }
-
-        free(newX);
+        X.insert(X.begin() + bestIndex, index);
 
     }
 }
@@ -317,11 +313,13 @@ int main()
     vector<pair<int, int>> W;
     vector<int> X;
 
+    
+
     bool *ordered;
     int count;
     std::ifstream data("C:/Users/kacpe/source/repos/NEH/neh.data.txt");
     std::string find = "data.";
-    find.append("100:");
+    find.append("000:");
     std::string tmp;
     while (tmp != find) {
         data >> tmp;
@@ -336,6 +334,14 @@ int main()
     
     Xold = (int*)malloc(N * sizeof(int));
     X.resize(N);
+
+    //qneh
+    int** TGraph = new int* [N];
+    //Allocating the column space in heap dynamically
+    for (int i = 0; i < N; i++) {
+        TGraph[i] = new int[M];
+    }
+
     //W = new int[N];
     W.resize(N);
 
@@ -349,8 +355,10 @@ int main()
     
     //algorytm
     auto start = chrono::steady_clock::now();
-    //algorytm0(T, P, Xold, M, N, ordered, W, temp);
-    algorytm1(T, P, X, M, N, ordered, W, temp);
+    //algorytm2(T, P, Xold, M, N, ordered, W, temp);
+    //algorytm1(T, P, X, M, N, ordered, W, temp);
+    algorytm2(T, P, X, M, N, ordered, W, temp);
+
 
 
     /*
@@ -368,8 +376,9 @@ int main()
     {
         cout << X[i] + 1 << " ";
     }
-    cout << endl << Cmax1(T,P,X,M,N) << endl;
+    //cout << endl << Cmax1(T,P,X,M,N) << endl;
     //cout << endl << Cmax(T,P,Xold,M,N) << endl;
+    cout << endl << Cmax2(TGraph,P,X,M,N) << endl;
     delete[] P;
     delete[] T;
     free(Xold);
@@ -377,8 +386,8 @@ int main()
     delete[] temp;
     //delete[] W;
     W.clear();
-    //delete[] ordered;
-    
+    delete[] ordered;
+    delete[] TGraph;
 
 }
 
