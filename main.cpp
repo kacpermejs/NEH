@@ -118,7 +118,7 @@ int Cmax2(SchedulingGraphList& Graph, int* P, const vector<int> &X, int M, int N
         }
         else if (Place == nullptr && i > 0)
         {
-            newJob.R[i] = newJob.R[i] + P[Elem * M + i];
+            newJob.R[i] = newJob.R[i-1] + P[Elem * M + i];
         }
         else if (Place != nullptr && i == 0)
         {
@@ -133,22 +133,30 @@ int Cmax2(SchedulingGraphList& Graph, int* P, const vector<int> &X, int M, int N
     }
 
     
-    if (Place == nullptr)//ostatnie miejsce
+    if (Place == Graph.Tail)
     {
         return newJob.R[M - 1];
     }
-    else if(Place->Next == nullptr)
-    {
-        return newJob.R[M - 1];
-    }
-        
-
+    
     int highest = 0;
-    for (int i = 0; i < M; i++)
+    if (Place == nullptr)
     {
-        
-        highest = max(newJob.R[i] + Place->Next->L[i], highest);
+        for (int i = 0; i < M; i++)
+        {
+            highest = max(newJob.R[i] + Graph.Head->L[i], highest);
+        }
     }
+    else
+    {
+        for (int i = 0; i < M; i++)
+        {
+            highest = max(newJob.R[i] + Place->Next->L[i], highest);
+        }
+    }
+    
+
+    
+    
     return highest;
 }
 
@@ -410,7 +418,7 @@ void algorytm2(SchedulingGraphList& Graph, int* P, vector<int> &X, int M, int N,
         //wstawianie elementu na w³aœciw miejsce
         Graph.InsertAfter(bestIterator, index);
         if (bestIterator != nullptr)//wybrano inne ni¿ pierwsze miejsce
-            iterator = bestIterator;
+            iterator = bestIterator->Next;
         else//pierwsze miejsce
             iterator = Graph.Head;
         ///TODO naprawianie grafu
@@ -439,7 +447,7 @@ void algorytm2(SchedulingGraphList& Graph, int* P, vector<int> &X, int M, int N,
         }
 
         if (bestIterator != nullptr)//wybrano inne ni¿ ostatnie miejsce
-            iterator = bestIterator;
+            iterator = bestIterator->Next;
         else//ostatnie miejsce
             iterator = Graph.Head;
         for (int i = bestIndex; i >= 0; i--)
@@ -559,7 +567,8 @@ int main()
     }
     //cout << endl << Cmax1(T,P,X,M,N) << endl;
     //cout << endl << Cmax(T,P,Xold,M,N) << endl;
-    cout << endl << TGraphL[0][0] << endl;
+    //cout << endl << TGraphL[0][0] << endl;
+    cout << endl << Graph.Head->L[0] << endl;
     delete[] P;
     delete[] T;
     free(Xold);
