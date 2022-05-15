@@ -7,6 +7,86 @@
 
 using namespace std;
 
+struct Job
+{
+    int index;//numer zadania
+    Job* Previous;
+    Job* Next;
+    vector<int>  R;
+    vector<int>  L;
+    
+
+    Job(int m, int i): Previous(nullptr), Next(nullptr), index(i)
+    {
+        R.resize(m);
+        L.resize(m);
+    }
+
+    Job(int m, Job* p, Job* n, int i) : Previous(p), Next(n), index(i)
+    {
+        R.resize(m);
+        L.resize(m);
+    }
+    
+};
+
+class SchedulingGraphList
+{
+public:
+    Job* Head;
+    Job* Tail;
+    int machines;
+    int JobsOrdered;
+
+    SchedulingGraphList(int M): machines(M), JobsOrdered(0), Head(nullptr), Tail(nullptr)
+    {
+
+    }
+    
+
+    void InsertAfter(Job* prevNode, int index)
+    {
+        if (prevNode == nullptr)//insert at head
+        {
+            //allocate and set pointers and job index
+            Job* newNode = new Job(machines, nullptr, Head, index);
+
+            if (Head == nullptr)//empty
+            {
+                //fix Tail
+                Tail = newNode;
+            }
+            else
+            {
+                //fix previous
+                Head->Previous = newNode;
+            }
+            Head = newNode;
+
+
+        }
+        else
+        {
+            //allocate and set pointers and job index
+            Job* newNode = new Job(machines, prevNode, prevNode->Next, index);
+
+            //reset prevNode next pointer
+            prevNode->Next = newNode;
+
+            //fix backward pointer
+            if (newNode->Next != nullptr)//isn't last
+                newNode->Next->Previous = newNode;
+            else//is last
+                Tail = newNode;
+            //increment counter
+            JobsOrdered++;
+        }
+    }
+    
+
+    
+};
+
 int Cmax(int* T, int* P, int* X, int M, int N);
 int Cmax1(int* T, int* P, const vector<int> &X, int M, int N)
 {
@@ -22,43 +102,52 @@ int Cmax1(int* T, int* P, const vector<int> &X, int M, int N)
     }
     return T[M];
 }
-int Cmax2(vector<vector<int>>& Tr, vector<vector<int>>& Tl, int* P, const vector<int> &X, int M, int N, int Elem, int Place)
+int Cmax2(SchedulingGraphList& Graph, int* P, const vector<int> &X, int M, int N, int Elem, Job* Place)
 {
 
-    P[Elem];//nowy element
-    vector<int> R;
+    /*vector<int> R;
     vector<int> L;
     R.resize(M);
-    L.resize(M);
+    L.resize(M);*/
+    Job newJob(M, Elem);
     for (int i = 0; i < M; i++)
     {
-        if (Place == 0 && i == 0)
+        if (Place == nullptr && i == 0)
         {
-            R[i] = P[Elem * M + i];
+            newJob.R[i] = P[Elem * M + i];
         }
-        else if (Place == 0 && i > 0)
+        else if (Place == nullptr && i > 0)
         {
-            R[i] = R[i - 1] + P[Elem * M + i];
+            newJob.R[i] = newJob.R[i] + P[Elem * M + i];
         }
-        else if (Place > 0 && i == 0)
+        else if (Place != nullptr && i == 0)
         {
-            R[i] = Tr[i][Place-1] + P[Elem * M + i];
+            newJob.R[i] = Place->R[i] + P[Elem * M + i]; //Tr[i][Place-1] + P[Elem * M + i];
         }
         else
         {
-            R[i] = std::max(R[i - 1] + P[Elem * M + i], Tr[i][Place-1] + P[Elem * M + i]);
+            int a1 = newJob.R[i - 1] + P[Elem * M + i];
+            int a2 = Place->R[i] + P[Elem * M + i];
+            newJob.R[i] = std::max(a1 , a2);
         }
     }
 
     
-    if (Place == N - 1)
-        return R[M - 1];
+    if (Place == nullptr)//ostatnie miejsce
+    {
+        return newJob.R[M - 1];
+    }
+    else if(Place->Next == nullptr)
+    {
+        return newJob.R[M - 1];
+    }
+        
 
     int highest = 0;
     for (int i = 0; i < M; i++)
     {
         
-        highest = max(R[i] + Tl[i][Place + 1], highest);
+        highest = max(newJob.R[i] + Place->Next->L[i], highest);
     }
     return highest;
 }
@@ -239,7 +328,7 @@ void algorytm1(int* T, int* P, vector<int> &X, int M, int N, bool* ordered, vect
     
 }
 
-void algorytm2(vector<vector<int>> Tr, vector<vector<int>> Tl, int* P, vector<int> &X, int M, int N, vector<pair<int, int>> W, int* temp)//qneh
+void algorytm2(SchedulingGraphList& Graph, int* P, vector<int> &X, int M, int N, vector<pair<int, int>> W, int* temp)//qneh
 {
     //Wagi
     for (int i = 0; i < N; i++)
@@ -258,6 +347,7 @@ void algorytm2(vector<vector<int>> Tr, vector<vector<int>> Tl, int* P, vector<in
     }
     sort(W.begin(), W.end(), sortbysecdesc);
 
+    
 
     //cout << endl;
     int highest = 0;
@@ -277,6 +367,8 @@ void algorytm2(vector<vector<int>> Tr, vector<vector<int>> Tl, int* P, vector<in
         int bestIndex = 0;
         int c;
         int best = INT32_MAX;
+        Job* iterator = nullptr;
+        Job* bestIterator = nullptr;
 
         for (int k = 0; k < l + 1; k++)//2
         {
@@ -284,32 +376,43 @@ void algorytm2(vector<vector<int>> Tr, vector<vector<int>> Tl, int* P, vector<in
             //X.insert(X.begin() + k, index);
             
             //sprawdzamy Cmax na k-tym miejscu
+            
 
             //sprawdzamy czy jest lepiej
-            c = Cmax2(Tr, Tl, P, X, M, l + 1, index, k);
+            c = Cmax2(Graph, P, X, M, l + 1, index, iterator);
             if (c < best)
             {
                 best = c;
+                bestIterator = iterator;
                 bestIndex = k;
             }
             //X.erase(X.begin() + k);
-
+            ///TODO iterator increment
+            if (Graph.Head != nullptr)
+            {
+                if (k == 0)
+                {
+                    iterator = Graph.Head;
+                }
+                else
+                {
+                    iterator = iterator->Next;
+                }
+            }
+            
 
 
         }
 
         //wynik czêœciowy
-        X.insert(X.begin() + bestIndex, index);
-        vector<int> R;
-        R.resize(M);
         
-        for (int i = 0; i < M; i++)
-        {
-            Tr[i].insert(Tr.begin() + bestIndex, 0);
-            Tl[i].insert(Tl.begin() + bestIndex, 0);
-        }
-        
-        
+
+        //wstawianie elementu na w³aœciw miejsce
+        Graph.InsertAfter(bestIterator, index);
+        if (bestIterator != nullptr)//wybrano inne ni¿ pierwsze miejsce
+            iterator = bestIterator;
+        else//pierwsze miejsce
+            iterator = Graph.Head;
         ///TODO naprawianie grafu
         for (int i = bestIndex; i < l+1; i++)//po zadaniach
         {
@@ -317,45 +420,50 @@ void algorytm2(vector<vector<int>> Tr, vector<vector<int>> Tl, int* P, vector<in
             {
                 if (i == 0 && j == 0)
                 {
-                    Tr[j][i] = P[X[i] * M + j];
+                    iterator->R[j] = P[iterator->index * M + j];
                 }
                 else if (j > 0 && i == 0)
                 {
-                    Tr[j][i] = Tr[j - 1][i] + P[X[i] * M + j];//[j-1][i]
+                    iterator->R[j] = iterator->R[j - 1] + P[iterator->index * M + j];//[j-1][i]
                 }
                 else if (i > 0 && j == 0)
                 {
-                    Tr[j][i] = Tr[j][i - 1] + P[X[i] * M + j];//[j][i-1]
+                    iterator->R[j] = iterator->Previous->R[j] + P[iterator->index * M + j];//[j][i-1]
                 }
                 else
                 {
-                    Tr[j][i] = std::max(Tr[j - 1][i] + P[X[i] * M + j], Tr[j][i - 1] + P[X[i] * M + j]);
+                    iterator->R[j] = std::max(iterator->R[j - 1] + P[iterator->index * M + j], iterator->Previous->R[j] + P[iterator->index * M + j]);
                 }
             }
+            iterator = iterator->Next;
         }
 
-
+        if (bestIterator != nullptr)//wybrano inne ni¿ ostatnie miejsce
+            iterator = bestIterator;
+        else//ostatnie miejsce
+            iterator = Graph.Head;
         for (int i = bestIndex; i >= 0; i--)
         {
             for (int j = M - 1; j >= 0; j--)
             {
-                if (i == N - 1 && j == M - 1)
+                if (i == l && j == M - 1)
                 {
-                    Tl[j][i] = P[X[i] * M + j];
+                    iterator->L[j] = P[iterator->index * M + j];
                 }
-                else if (j < M - 1 && i == N - 1)
+                else if (i == l && j < M - 1)
                 {
-                    Tl[j][i] = Tl[j + 1][i] + P[X[i] * M + j];
+                    iterator->L[j] = iterator->L[j+1] + P[iterator->index * M + j];
                 }
-                else if (i < N - 1 && j == M - 1)
+                else if (i < l && j == M - 1)
                 {
-                    Tl[j][i] = Tl[j][i + 1] + P[X[i] * M + j];
+                    iterator->L[j] = iterator->Next->L[j] + P[iterator->index * M + j];
                 }
                 else
                 {
-                    Tl[j][i] = std::max(Tl[j + 1][i] + P[X[i] * M + j], Tl[j][i + 1] + P[X[i] * M + j]);
+                    iterator->L[j] = std::max(iterator->L[j+1] + P[iterator->index * M + j], iterator->Next->L[j] + P[iterator->index * M + j]);
                 }
             }
+            iterator = iterator->Previous;
         }
 
     }
@@ -408,24 +516,14 @@ int main()
     {
         TGraphR[i].resize(N);
     }
-    //int** TGraphR = new int* [N];
-    ////Allocating the column space in heap dynamically
-    //for (int i = 0; i < N; i++) {
-    //    TGraphR[i] = new int[M];
-    //}
-    //qneh
+    
     vector<vector<int>> TGraphL;
     TGraphL.resize(M);
     for (int i = 0; i < M; i++)
     {
         TGraphL[i].resize(N);
     }
-    /*
-    int** TGraphL = new int* [N];
-    //Allocating the column space in heap dynamically
-    for (int i = 0; i < N; i++) {
-        TGraphL[i] = new int[M];
-    }*/
+    SchedulingGraphList Graph = SchedulingGraphList(M);
 
     //W = new int[N];
     W.resize(N);
@@ -442,23 +540,21 @@ int main()
     auto start = chrono::steady_clock::now();
     //algorytm2(T, P, Xold, M, N, ordered, W, temp);
     //algorytm1(T, P, X, M, N, ordered, W, temp);
-    algorytm2(TGraphR, TGraphL, P, X, M, N, W, temp);
+    algorytm2(Graph, P, X, M, N, W, temp);
 
-
-
-    /*
-    // Kolejnosc: 1 4 3 2
-    X[0] = 0;
-    X[1] = 3;
-    X[2] = 2;
-    X[3] = 1;
-    */
     auto stop = chrono::steady_clock::now();
     chrono::duration<double> elapsed = stop - start;
     cout << "Czas: " << elapsed.count() << endl;
     cout << "Kolejnosc: ";
+
+    ///TODO kolejnoœæ z grafu
+    Job* it=Graph.Head;
     for (int i = 0; i < N; i++)
     {
+        //do qneh ===========
+        X[i] = it->index;
+        it = it->Next;
+        //===================
         cout << X[i] + 1 << " ";
     }
     //cout << endl << Cmax1(T,P,X,M,N) << endl;
